@@ -16,6 +16,7 @@ type AuthContextProps = {
 
 }
 
+
 const authInitialState: AuthState = {
     errorMessage: '',
     token: null,
@@ -25,7 +26,11 @@ const authInitialState: AuthState = {
 
 export const AuthContext =  createContext({} as AuthContextProps);
 
-export const AuthProvider = ({ children }: {children: JSX.Element | JSX.Element[]}) => {
+interface PropsProvider {
+    children: JSX.Element | JSX.Element[];
+}
+
+export const AuthProvider = ({ children }: PropsProvider) => {
 
     const [state, dispatch] = useReducer(AuthReducer, authInitialState);
 
