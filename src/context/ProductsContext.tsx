@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useState } from "react";
 import cafeApi from "../api/cafeApi";
 import { Producto, ProductsResponse } from '../interfaces/AppInterfaces';
+import { ImagePickerResponse } from 'react-native-image-picker';
 
 type ProductsContextProps = {
     products: Producto[];
@@ -10,7 +11,7 @@ type ProductsContextProps = {
     updateProduct: (categoryId: string, productName: string, productId: string) => Promise<void>;
     deleteProduct: (productId: string) => Promise<void>;
     loadProductById: (productId: string) => Promise<Producto>;
-    uploadImageProduct: (data: any, productId: string) => Promise<void> //TODO: Cambiar tipado de data
+    uploadImageProduct: (data: ImagePickerResponse, productId: string) => Promise<void> 
 }
 
 
@@ -70,17 +71,34 @@ export const ProductsProvider = ({children}: PropsProvider) => {
         }));
     }
 
+    
+    const loadProductById = async (productId: string): Promise<Producto> => {
+        const resp = await cafeApi.get<Producto>(`/productos/${productId}`);
+        return resp.data;
+    }
+
+    const uploadImageProduct = async ( { assets }: any, productId: string) => {
+        const fileToUpload = {
+            uri: assets[0].uri,
+            type: assets[0].type,
+            name: assets[0].fileName
+        }
+        
+        const formdata = new FormData();
+        formdata.append('archivo', fileToUpload);
+
+        try {
+            await cafeApi.put(`/uploads/productos/${productId}`, formdata);
+        } catch (error) {
+            console.log({error});  
+        }
+    }
+    
     const deleteProduct = async (productId: string) => {
         console.log('updateProduct');
         console.log({ productId });
     }
 
-    const loadProductById = async (productId: string): Promise<Producto> => {
-        const resp = await cafeApi.get<Producto>(`/productos/${productId}`);
-        return resp.data;
-    }
-    
-    const uploadImageProduct = async (data: any, productId: string) => {}
 
     return (
         <ProductsContext.Provider

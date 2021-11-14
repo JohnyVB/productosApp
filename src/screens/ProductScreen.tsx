@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { StackScreenProps } from '@react-navigation/stack';
 import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -8,6 +8,8 @@ import { useCategories } from '../hooks/useCategories';
 import { useForm } from '../hooks/useForm';
 import { ProductsContext } from '../context/ProductsContext';
 
+import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+
 
 interface Props extends StackScreenProps<ProductsStackProps, 'ProductScreen'>{};
 
@@ -15,8 +17,10 @@ export const ProductScreen = ({route, navigation}: Props) => {
 
     const { id = '', name = '' } = route.params;
 
+    const [temUri, setTemUri] = useState<string>()
+
     const { categories, isLoading } = useCategories();
-    const { loadProductById, addProduct, updateProduct } = useContext(ProductsContext)
+    const { loadProductById, addProduct, updateProduct, uploadImageProduct } = useContext(ProductsContext);
 
     const { _id, categoriaId, nombre, img, form, onChange, setFormValue } = useForm({
         _id: id,
@@ -24,8 +28,6 @@ export const ProductScreen = ({route, navigation}: Props) => {
         nombre: name,
         img: ''
     });
-
-   
 
     useEffect(() => {
         navigation.setOptions({
@@ -59,6 +61,34 @@ export const ProductScreen = ({route, navigation}: Props) => {
             const newProduct = await addProduct( temCategoryId, nombre );
             onChange(newProduct._id, '_id');
         }
+    }
+
+    const takePhoto = () => {
+        launchCamera({
+            mediaType: 'photo',
+            quality: 0.5
+        }, (resp: any) =>{
+
+            if( resp.didCancel) return;
+            if(!resp.assets[0].uri) return;
+
+            setTemUri(resp.assets[0].uri);
+            uploadImageProduct(resp, _id);
+        });
+    }
+
+    const openGalery = () => {
+        launchImageLibrary({
+            mediaType: 'photo',
+            quality: 0.5
+        }, (resp: any) =>{
+
+            if( resp.didCancel) return;
+            if(!resp.assets[0].uri) return;
+
+            setTemUri(resp.assets[0].uri);
+            uploadImageProduct(resp, _id);
+        });
     }
 
     return (
@@ -107,7 +137,7 @@ export const ProductScreen = ({route, navigation}: Props) => {
                                 <TouchableOpacity
                                     activeOpacity={0.8}
                                     style={styles.btn}
-                                    onPress={ () => {} }
+                                    onPress={ takePhoto }
                                 >
                                     <Text style={styles.btnText}>Cámara</Text>
                                 </TouchableOpacity>
@@ -115,7 +145,7 @@ export const ProductScreen = ({route, navigation}: Props) => {
                                 <TouchableOpacity
                                     activeOpacity={0.8}
                                     style={styles.btn}
-                                    onPress={ () => {} }
+                                    onPress={ openGalery }
                                 >
                                     <Text style={styles.btnText}>Galería</Text>
                                 </TouchableOpacity>
@@ -125,7 +155,7 @@ export const ProductScreen = ({route, navigation}: Props) => {
 
 
                 {
-                    (img.length > 0)
+                    (img.length > 0 && !temUri)
                         && (
                             <Image 
                                 source={{ uri: img }}
@@ -133,6 +163,21 @@ export const ProductScreen = ({route, navigation}: Props) => {
                             />
                         )
                 }
+
+                {
+                    (temUri)
+                        && (
+                            <Image 
+                                source={{ uri: temUri }}
+                                style={{ width: '100%', height: 300 }}
+                            />
+                        )
+                }
+
+                
+
+
+                
 
             </ScrollView>
         </View>
